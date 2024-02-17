@@ -6,6 +6,8 @@ public class App {
             @Override
             public void run() {
                 new Gui().setVisible(true);
+
+                //System.out.println(WeatherApp.getLocationData("Warsaw"));
             }
         });
     }
