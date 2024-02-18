@@ -8,6 +8,7 @@ public class App {
                 new Gui().setVisible(true);
 
                 //System.out.println(WeatherApp.getLocationData("Warsaw"));
+                //System.out.println(WeatherApp.getCurrentTime());
             }
         });
     }
