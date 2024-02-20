@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class Gui extends JFrame {
-    private JTextField searchTextField;
+    //private JTextField searchTextField;
     private JSONObject weatherData;
 
     public Gui() {
@@ -25,8 +25,13 @@ public class Gui extends JFrame {
     }
 
     private void addGuiComponents() {
-        addSearchTextField();
+        //addSearchTextField();
         //addSearchButton();
+
+        JTextField searchTextField = new JTextField();
+        searchTextField.setBounds(15, 15, 351, 45);
+        searchTextField.setFont(new Font("Dialog", Font.PLAIN, 24));
+        add(searchTextField);
 
         // TODO: make the method for choosing the right weather condition image
         JLabel weatherConditionImage = new JLabel(loadImage("src/assets/sunny.png"));
@@ -72,7 +77,7 @@ public class Gui extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String userInput = searchTextField.getText();
 
-                if (userInput.replaceAll("\\s", "").length() <= 0) return;
+                if (userInput.replaceAll("\\s", "").isEmpty()) return;
 
                 weatherData = WeatherApp.getWeatherData(userInput);
                 String weatherCondition = (String) weatherData.get("weatherCondition");
@@ -98,23 +103,25 @@ public class Gui extends JFrame {
                 weatherConditionDesc.setText(weatherCondition);
 
                 long humidity = (long) weatherData.get("humidity");
-                humidityText.setText("<html><b>Humidity</b " + humidity + "%</html>");
+                System.out.println("hum: " + humidity);
+                humidityText.setText("<html><b>Humidity</b> " + humidity + "%</html>");
 
                 double windspeed = (double) weatherData.get("windspeed");
-                windSpeedText.setText("<html><b>Windspeed</b " + windspeed + "km/h</html>");
+                System.out.println("wind: " + windspeed);
+                windSpeedText.setText("<html><b>Windspeed</b> " + windspeed + "km/h</html>");
             }
         });
 
         add(searchButton);
     }
 
-    private void addSearchTextField() {
-        JTextField searchTextField = new JTextField();
-        searchTextField.setBounds(15, 15, 351, 45);
-        searchTextField.setFont(new Font("Dialog", Font.PLAIN, 24));
-        this.searchTextField = searchTextField;
-        add(searchTextField);
-    }
+//    private void addSearchTextField() {
+//        JTextField searchTextField = new JTextField();
+//        searchTextField.setBounds(15, 15, 351, 45);
+//        searchTextField.setFont(new Font("Dialog", Font.PLAIN, 24));
+//        this.searchTextField = searchTextField;
+//        add(searchTextField);
+//    }
 
 //    private void addSearchButton() {
 //        JButton searchButton = new JButton(loadImage("src/assets/search.png"));
