@@ -5,28 +5,23 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class WeatherApp {
-    public static JSONObject getWeatherData(String locationName) {
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH':00'";
+
+    public static JSONObject getWeatherData(String locationName) throws IllegalStateException{
         JSONArray locationData = getLocationData(locationName);
 
-        JSONObject location = (JSONObject) locationData.getFirst();
-        double latitude = (double) location.get("latitude");
-        double longitude = (double) location.get("longitude");
-
-        String urlString =
-                "https://api.open-meteo.com/v1/forecast?latitude="
-                        + latitude + "&longitude="
-                        + longitude
-                        + "&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto";
+        String urlString = getUrlString(locationData);
 
         try {
             HttpURLConnection connection = fetchApiResponse(urlString);
+            assert connection != null;
             if(connection.getResponseCode() != 200) {
                 System.out.println("Error: Could not connect to the API");
                 return null;
@@ -52,7 +47,6 @@ public class WeatherApp {
             JSONArray temperatureData = (JSONArray) hourly.get("temperature_2m");
             double temperature = (double) temperatureData.get(index);
 
-            if (hourly.containsKey("weather_code")) System.out.println("Contains----------------------");
             JSONArray weathercode = (JSONArray) hourly.get("weather_code");
             String weatherCondition = convertWeatherCode((long) weathercode.get(index));
 
@@ -76,6 +70,19 @@ public class WeatherApp {
         return null;
     }
 
+    private static String getUrlString(JSONArray locationData) throws IllegalStateException{
+        if (locationData == null || locationData.isEmpty())
+            throw new IllegalStateException("Location data is null or empty");
+        JSONObject location = (JSONObject) locationData.getFirst();
+        double latitude = (double) location.get("latitude");
+        double longitude = (double) location.get("longitude");
+
+        return "https://api.open-meteo.com/v1/forecast?latitude="
+                + latitude + "&longitude="
+                + longitude
+                + "&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto";
+    }
+
     public static JSONArray getLocationData(String locationName) {
         locationName = locationName.replaceAll(" ", "+");
         String urlString =
@@ -86,26 +93,19 @@ public class WeatherApp {
         try {
             HttpURLConnection connection = fetchApiResponse(urlString);
 
+            assert connection != null;
             if(connection.getResponseCode() != 200) {
                 System.out.println("Error: Could not connect to the API");
                 return null;
             }
 
-            StringBuilder resultJson = new StringBuilder();
-            Scanner reader = new Scanner(connection.getInputStream());
-
-            while(reader.hasNext()) {
-                resultJson.append(reader.nextLine());
-            }
-
-            reader.close();
+            StringBuilder resultJson = readApiResponse(connection);
             connection.disconnect();
 
             JSONParser parser = new JSONParser();
             JSONObject resultsJsonObj = (JSONObject) parser.parse(String.valueOf(resultJson));
 
-            JSONArray locationData = (JSONArray) resultsJsonObj.get("results");
-            return locationData;
+            return (JSONArray) resultsJsonObj.get("results");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
@@ -113,15 +113,26 @@ public class WeatherApp {
         return null;
     }
 
+    private static StringBuilder readApiResponse(HttpURLConnection connection) throws IOException{
+        StringBuilder resultJson = new StringBuilder();
+        try (Scanner reader = new Scanner(connection.getInputStream())) {
+            while (reader.hasNext()) {
+                resultJson.append(reader.nextLine());
+            }
+        }
+
+        return resultJson;
+    }
+
     private static HttpURLConnection fetchApiResponse(String urlString) {
         try {
-            URL url = new URL(urlString);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            URI url = new URI(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.toURL().openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
 
             return connection;
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
 
@@ -139,10 +150,9 @@ public class WeatherApp {
 
     public static String getCurrentTime() {
         LocalDateTime currentDateTime = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH':00'");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
-        String formattedDateTime = currentDateTime.format(formatter);
-        return formattedDateTime;
+        return currentDateTime.format(formatter);
     }
 
     private static String convertWeatherCode(long weathercode) {
