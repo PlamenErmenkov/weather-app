@@ -1,5 +1,5 @@
 # Weather App
-A simple Java weather application with a graphical user interface (GUI) using Swing. The application fetches weather data from the Open Meteo API(https://open-meteo.com) and displays it in a JFrame.
+A simple Java weather application with a graphical user interface (GUI) using Swing. The application fetches weather data from the Open Meteo API (https://open-meteo.com) and displays it in a JFrame.
 
 ### Usage:
 1. Enter the location in the search text field.
